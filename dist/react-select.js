@@ -352,9 +352,10 @@ var Select = _react2['default'].createClass({
 		valueComponent: _react2['default'].PropTypes.func, // value component to render
 		valueKey: _react2['default'].PropTypes.string, // path of the label value in option objects
 		valueRenderer: _react2['default'].PropTypes.func, // valueRenderer: function (option) {}
-		wrapperStyle: _react2['default'].PropTypes.object },
+		wrapperStyle: _react2['default'].PropTypes.object, // optional style to apply to the component wrapper
+		preserveInputValue: _react2['default'].PropTypes.bool },
 
-	// optional style to apply to the component wrapper
+	// do not clear input value on item select
 	getDefaultProps: function getDefaultProps() {
 		return {
 			addLabelText: 'Add "{label}"?',
@@ -383,7 +384,8 @@ var Select = _react2['default'].createClass({
 			searchable: true,
 			simpleValue: false,
 			valueComponent: _Value2['default'],
-			valueKey: 'value'
+			valueKey: 'value',
+			preserveInputValue: false
 		};
 	},
 
@@ -483,6 +485,8 @@ var Select = _react2['default'].createClass({
 	},
 
 	closeMenu: function closeMenu() {
+		console.log('ss');
+		console.log(this.props.preserveInputValue);
 		this.setState({
 			isOpen: false,
 			isPseudoFocused: this.state.isFocused && !this.props.multi,
@@ -510,8 +514,9 @@ var Select = _react2['default'].createClass({
 		if (this.props.onBlur) {
 			this.props.onBlur(event);
 		}
+		console.log('handleInputBlur');
 		this.setState({
-			inputValue: '',
+			inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 			isFocused: false,
 			isOpen: false,
 			isPseudoFocused: false
@@ -638,16 +643,19 @@ var Select = _react2['default'].createClass({
 	},
 
 	selectValue: function selectValue(value) {
+		console.log('selectValue');
+		console.log(this.props.preserveInputValue);
+		console.log(this.state.inputValue);
 		if (this.props.multi) {
 			this.addValue(value);
 			this.setState({
-				inputValue: ''
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : ''
 			});
 		} else {
 			this.setValue(value);
 			this.setState({
 				isOpen: false,
-				inputValue: '',
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 				isPseudoFocused: this.state.isFocused
 			});
 		}
@@ -703,14 +711,16 @@ var Select = _react2['default'].createClass({
 	},
 
 	focusAdjacentOption: function focusAdjacentOption(dir) {
+		console.log('focusAdjacentOption');
 		var options = this._visibleOptions.filter(function (i) {
 			return !i.disabled;
 		});
 		this._scrollToFocusedOptionOnUpdate = true;
 		if (!this.state.isOpen) {
+			console.log('focusAdjacentOption clear');
 			this.setState({
 				isOpen: true,
-				inputValue: '',
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 				focusedOption: this._focusedOption || options[dir === 'next' ? 0 : options.length - 1]
 			});
 			return;
