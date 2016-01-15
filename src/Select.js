@@ -83,6 +83,7 @@ const Select = React.createClass({
 		valueKey: React.PropTypes.string,           // path of the label value in option objects
 		valueRenderer: React.PropTypes.func,        // valueRenderer: function (option) {}
 		wrapperStyle: React.PropTypes.object,       // optional style to apply to the component wrapper
+		preserveInputValue: React.PropTypes.bool,   // do not clear input value on item select
 	},
 
 	getDefaultProps () {
@@ -114,6 +115,7 @@ const Select = React.createClass({
 			simpleValue: false,
 			valueComponent: Value,
 			valueKey: 'value',
+			preserveInputValue: false
 		};
 	},
 
@@ -213,6 +215,8 @@ const Select = React.createClass({
 	},
 
 	closeMenu () {
+		console.log('ss')
+		console.log(this.props.preserveInputValue)
 		this.setState({
 			isOpen: false,
 			isPseudoFocused: this.state.isFocused && !this.props.multi,
@@ -240,8 +244,9 @@ const Select = React.createClass({
 		if (this.props.onBlur) {
 			this.props.onBlur(event);
 		}
+		console.log('handleInputBlur')
 		this.setState({
-			inputValue: '',
+			inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 			isFocused: false,
 			isOpen: false,
 			isPseudoFocused: false,
@@ -351,16 +356,19 @@ const Select = React.createClass({
 	},
 
 	selectValue (value) {
+		console.log('selectValue')
+		console.log(this.props.preserveInputValue)
+		console.log(this.state.inputValue)
 		if (this.props.multi) {
 			this.addValue(value);
 			this.setState({
-				inputValue: '',
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 			});
 		} else {
 			this.setValue(value);
 			this.setState({
 				isOpen: false,
-				inputValue: '',
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 				isPseudoFocused: this.state.isFocused,
 			});
 		}
@@ -414,12 +422,14 @@ const Select = React.createClass({
 	},
 
 	focusAdjacentOption (dir) {
+		console.log('focusAdjacentOption')
 		var options = this._visibleOptions.filter(i => !i.disabled);
 		this._scrollToFocusedOptionOnUpdate = true;
 		if (!this.state.isOpen) {
+			console.log('focusAdjacentOption clear')
 			this.setState({
 				isOpen: true,
-				inputValue: '',
+				inputValue: this.props.preserveInputValue ? this.state.inputValue : '',
 				focusedOption: this._focusedOption || options[dir === 'next' ? 0 : options.length - 1]
 			});
 			return;
