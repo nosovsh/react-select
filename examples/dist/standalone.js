@@ -325,6 +325,7 @@ var Select = _react2['default'].createClass({
 		escapeClearsValue: _react2['default'].PropTypes.bool, // whether escape clears the value when the menu is closed
 		filterOption: _react2['default'].PropTypes.func, // method to filter a single option (option, filterString)
 		filterOptions: _react2['default'].PropTypes.any, // boolean to enable default filtering or function to filter the options array ([options], filterString, [values])
+		hasSelectAll: _react2['default'].PropTypes.bool, // show button to select all options (for multiselect)
 		ignoreAccents: _react2['default'].PropTypes.bool, // whether to strip diacritics when filtering
 		ignoreCase: _react2['default'].PropTypes.bool, // whether to perform case-insensitive filtering
 		inputProps: _react2['default'].PropTypes.object, // custom attributes for the Input
@@ -345,6 +346,7 @@ var Select = _react2['default'].createClass({
 		onFocus: _react2['default'].PropTypes.func, // onFocus handler: function (event) {}
 		onInputChange: _react2['default'].PropTypes.func, // onInputChange handler: function (inputValue) {}
 		onMenuScrollToBottom: _react2['default'].PropTypes.func, // fires when the menu is scrolled to the bottom; can be used to paginate options
+		onSelectResetsInput: _react2['default'].PropTypes.bool, // whether input is cleared on select (works only for multiselect)
 		onValueClick: _react2['default'].PropTypes.func, // onClick handler for value labels: function (value, event) {}
 		optionComponent: _react2['default'].PropTypes.func, // option component to render in dropdown
 		optionRenderer: _react2['default'].PropTypes.func, // optionRenderer: function (option) {}
@@ -353,6 +355,7 @@ var Select = _react2['default'].createClass({
 		required: _react2['default'].PropTypes.bool, // applies HTML5 required attribute when needed
 		scrollMenuIntoView: _react2['default'].PropTypes.bool, // boolean to enable the viewport to shift so that the full menu fully visible when engaged
 		searchable: _react2['default'].PropTypes.bool, // whether to enable searching feature or not
+		selectAllText: _react2['default'].PropTypes.string, // label for select all button
 		simpleValue: _react2['default'].PropTypes.bool, // pass the value to onChange as a simple value (legacy pre 1.0 mode), defaults to false
 		style: _react2['default'].PropTypes.object, // optional style to apply to the control
 		tabIndex: _react2['default'].PropTypes.string, // optional tab index of the control
@@ -377,6 +380,7 @@ var Select = _react2['default'].createClass({
 			disabled: false,
 			escapeClearsValue: true,
 			filterOptions: true,
+			hasSelectAll: false,
 			ignoreAccents: true,
 			ignoreCase: true,
 			inputProps: {},
@@ -388,11 +392,13 @@ var Select = _react2['default'].createClass({
 			multi: false,
 			noResultsText: 'No results found',
 			onBlurResetsInput: true,
+			onSelectResetsInput: true,
 			optionComponent: _Option2['default'],
 			placeholder: 'Select...',
 			required: false,
 			scrollMenuIntoView: true,
 			searchable: true,
+			selectAllText: 'Select all',
 			simpleValue: false,
 			valueComponent: _Value2['default'],
 			valueKey: 'value'
@@ -444,6 +450,34 @@ var Select = _react2['default'].createClass({
 	focus: function focus() {
 		if (!this.refs.input) return;
 		this.refs.input.focus();
+	},
+
+	handleTouchMove: function handleTouchMove(event) {
+		// Set a flag that the view is being dragged
+		this.dragging = true;
+	},
+
+	handleTouchStart: function handleTouchStart(event) {
+		// Set a flag that the view is not being dragged
+		this.dragging = false;
+	},
+
+	handleTouchEnd: function handleTouchEnd(event) {
+		// Check if the view is being dragged, In this case
+		// we don't want to fire the click event (because the user only wants to scroll)
+		if (this.dragging) return;
+
+		// Fire the mouse events
+		this.handleMouseDown(event);
+	},
+
+	handleTouchEndClearValue: function handleTouchEndClearValue(event) {
+		// Check if the view is being dragged, In this case
+		// we don't want to fire the click event (because the user only wants to scroll)
+		if (this.dragging) return;
+
+		// Clear the value
+		this.clearValue(event);
 	},
 
 	handleMouseDown: function handleMouseDown(event) {
@@ -666,7 +700,7 @@ var Select = _react2['default'].createClass({
 		if (this.props.multi) {
 			this.addValue(value);
 			this.setState({
-				inputValue: ''
+				inputValue: this.props.onSelectResetsInput ? '' : this.state.inputValue
 			});
 		} else {
 			this.setValue(value);
@@ -850,7 +884,12 @@ var Select = _react2['default'].createClass({
 		if (!this.props.clearable || !this.props.value || this.props.multi && !this.props.value.length || this.props.disabled || this.props.isLoading) return;
 		return _react2['default'].createElement(
 			'span',
-			{ className: 'Select-clear-zone', title: this.props.multi ? this.props.clearAllText : this.props.clearValueText, 'aria-label': this.props.multi ? this.props.clearAllText : this.props.clearValueText, onMouseDown: this.clearValue, onTouchEnd: this.clearValue },
+			{ className: 'Select-clear-zone', title: this.props.multi ? this.props.clearAllText : this.props.clearValueText,
+				'aria-label': this.props.multi ? this.props.clearAllText : this.props.clearValueText,
+				onMouseDown: this.clearValue,
+				onTouchStart: this.handleTouchStart,
+				onTouchMove: this.handleTouchMove,
+				onTouchEnd: this.handleTouchEndClearValue },
 			_react2['default'].createElement('span', { className: 'Select-clear', dangerouslySetInnerHTML: { __html: '&times;' } })
 		);
 	},
@@ -960,6 +999,23 @@ var Select = _react2['default'].createClass({
 		return _react2['default'].createElement('input', { type: 'hidden', ref: 'value', name: this.props.name, value: value, disabled: this.props.disabled });
 	},
 
+	renderSelectAll: function renderSelectAll(options) {
+		var _this6 = this;
+
+		var optionClass = (0, _classnames2['default'])({
+			'Select-option': true,
+			'is-select-all': true,
+			'is-focused': false });
+		// TODO: implement
+		return _react2['default'].createElement(
+			'div',
+			{ className: optionClass, onMouseDown: function (event) {
+					return _this6.selectAll(event, options);
+				} },
+			this.props.selectAllText
+		);
+	},
+
 	getFocusableOption: function getFocusableOption(selectedOption) {
 		var options = this._visibleOptions;
 		if (!options.length) return;
@@ -968,6 +1024,12 @@ var Select = _react2['default'].createClass({
 		for (var i = 0; i < options.length; i++) {
 			if (!options[i].disabled) return options[i];
 		}
+	},
+
+	selectAll: function selectAll(event, options) {
+		event.preventDefault();
+		event.stopPropagation();
+		this.addValue(options);
 	},
 
 	render: function render() {
@@ -992,7 +1054,14 @@ var Select = _react2['default'].createClass({
 			this.renderHiddenField(valueArray),
 			_react2['default'].createElement(
 				'div',
-				{ ref: 'control', className: 'Select-control', style: this.props.style, onKeyDown: this.handleKeyDown, onMouseDown: this.handleMouseDown, onTouchEnd: this.handleMouseDown },
+				{ ref: 'control',
+					className: 'Select-control',
+					style: this.props.style,
+					onKeyDown: this.handleKeyDown,
+					onMouseDown: this.handleMouseDown,
+					onTouchEnd: this.handleTouchEnd,
+					onTouchStart: this.handleTouchStart,
+					onTouchMove: this.handleTouchMove },
 				this.renderValue(valueArray, isOpen),
 				this.renderInput(valueArray),
 				this.renderLoading(),
@@ -1004,9 +1073,13 @@ var Select = _react2['default'].createClass({
 				{ ref: 'menuContainer', className: 'Select-menu-outer', style: this.props.menuContainerStyle },
 				_react2['default'].createElement(
 					'div',
-					{ ref: 'menu', className: 'Select-menu', style: this.props.menuStyle, onScroll: this.handleMenuScroll, onMouseDown: this.handleMouseDownOnMenu },
+					{ ref: 'menu', className: 'Select-menu',
+						style: this.props.menuStyle,
+						onScroll: this.handleMenuScroll,
+						onMouseDown: this.handleMouseDownOnMenu },
 					this.renderMenu(options, !this.props.multi ? valueArray : null, focusedOption)
-				)
+				),
+				this.props.hasSelectAll && this.props.multi && options && options.length && this.renderSelectAll(options) || null
 			) : null
 		);
 	}
@@ -1063,13 +1136,34 @@ var Value = _react2['default'].createClass({
 		this.props.onRemove(this.props.value);
 	},
 
+	handleTouchEndRemove: function handleTouchEndRemove(event) {
+		// Check if the view is being dragged, In this case
+		// we don't want to fire the click event (because the user only wants to scroll)
+		if (this.dragging) return;
+
+		// Fire the mouse events
+		this.onRemove(event);
+	},
+
+	handleTouchMove: function handleTouchMove(event) {
+		// Set a flag that the view is being dragged
+		this.dragging = true;
+	},
+
+	handleTouchStart: function handleTouchStart(event) {
+		// Set a flag that the view is not being dragged
+		this.dragging = false;
+	},
+
 	renderRemoveIcon: function renderRemoveIcon() {
 		if (this.props.disabled || !this.props.onRemove) return;
 		return _react2['default'].createElement(
 			'span',
 			{ className: 'Select-value-icon',
 				onMouseDown: this.onRemove,
-				onTouchEnd: this.onRemove },
+				onTouchEnd: this.handleTouchEndRemove,
+				onTouchStart: this.handleTouchStart,
+				onTouchMove: this.handleTouchMove },
 			'×'
 		);
 	},
