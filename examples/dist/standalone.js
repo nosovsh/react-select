@@ -886,7 +886,7 @@ var Select = _react2['default'].createClass({
 			'span',
 			{ className: 'Select-clear-zone', title: this.props.multi ? this.props.clearAllText : this.props.clearValueText,
 				'aria-label': this.props.multi ? this.props.clearAllText : this.props.clearValueText,
-				onMouseDown: this.clearValue,
+				onMouseUp: this.clearValue,
 				onTouchStart: this.handleTouchStart,
 				onTouchMove: this.handleTouchMove,
 				onTouchEnd: this.handleTouchEndClearValue },
@@ -1160,7 +1160,7 @@ var Value = _react2['default'].createClass({
 		return _react2['default'].createElement(
 			'span',
 			{ className: 'Select-value-icon',
-				onMouseDown: this.onRemove,
+				onMouseUp: this.onRemove,
 				onTouchEnd: this.handleTouchEndRemove,
 				onTouchStart: this.handleTouchStart,
 				onTouchMove: this.handleTouchMove },
