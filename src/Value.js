@@ -55,8 +55,8 @@ const Value = React.createClass({
 	renderRemoveIcon () {
 		if (this.props.disabled || !this.props.onRemove) return;
 		return (
-			<span className="Select-value-icon"
-				onMouseDown={this.onRemove}
+			<span className="Select-value-icon" 
+				onMouseUp={this.onRemove}
 				onTouchEnd={this.handleTouchEndRemove}
 				onTouchStart={this.handleTouchStart}
 				onTouchMove={this.handleTouchMove}>

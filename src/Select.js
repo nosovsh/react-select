@@ -579,7 +579,7 @@ const Select = React.createClass({
 		return (
 			<span className="Select-clear-zone" title={this.props.multi ? this.props.clearAllText : this.props.clearValueText}
 						aria-label={this.props.multi ? this.props.clearAllText : this.props.clearValueText}
-						onMouseDown={this.clearValue}
+						onMouseUp={this.clearValue}
 						onTouchStart={this.handleTouchStart}
 						onTouchMove={this.handleTouchMove}
 						onTouchEnd={this.handleTouchEndClearValue}>
